@@ -1,17 +1,13 @@
 import { GetStaticPaths, GetStaticProps } from 'next'
-import { useRouter } from 'next/router'
-
 import Image from 'next/image'
-
 import Link from 'next/link'
-
 import { parseISO, format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-
 import { api } from '../../services/api'
 import { convertDurationToTimeString } from '../../utils/ConvertDurationToTimeString'
 
 import styles from './episode.module.scss'
+import { browser } from 'node:process'
 
 type Episode = {
     id: string;
@@ -30,15 +26,14 @@ type EpisodeProps = {
 }
 
 export default function Episode({ episode }: EpisodeProps) {
-    const router = useRouter()
 
     return (
         <div className={styles.episode}>
             <div className={styles.thumbnailContainer}>
                 <Link href="/">
-                <button>
-                    <img src="/arrow-left.svg" alt="Voltar" />
-                </button>
+                    <button>
+                        <img src="/arrow-left.svg" alt="Voltar" />
+                    </button>
                 </Link>
                 <Image
                     width={700}
@@ -46,7 +41,7 @@ export default function Episode({ episode }: EpisodeProps) {
                     src={episode.thumbnail}
                     objectFit="cover" />
                 <button type="button">
-                    <img src="/play.svg" alt="Tocar episódio"/>
+                    <img src="/play.svg" alt="Tocar episódio" />
                 </button>
             </div>
             <header>
@@ -55,16 +50,34 @@ export default function Episode({ episode }: EpisodeProps) {
                 <span>{episode.publishedAt}</span>
                 <span>{episode.durationAsString}</span>
             </header>
-            <div className={styles.description} 
-            dangerouslySetInnerHTML={{ __html: episode.description}}/>
-                
+            <div className={styles.description}
+                dangerouslySetInnerHTML={{ __html: episode.description }} />
+
         </div>
     )
 }
 
+
 export const getStaticPaths: GetStaticPaths = async () => {
+
+    const { data } = await api.get('episodes', {
+        params: {
+            _limit: 2,
+            _sort: 'published_at',
+            _order: 'desc'
+        }
+    })
+
+    const paths = data.map(episode => {
+        return {
+            params: {
+                slug: episode.id
+            }
+        }
+    })
+
     return {
-        paths: [],
+        paths,
         fallback: 'blocking'
     }
 }
